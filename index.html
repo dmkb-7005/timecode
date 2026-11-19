@@ -108,7 +108,8 @@ button{cursor:pointer}
 .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chip.accent{background:var(--info-bg);color:var(--accent)}
 .chip.accent svg{color:var(--accent)}
-.chip.copied svg{color:var(--positive)}
+.chip.done{background:var(--positive-bg);color:var(--positive)}
+.chip.done svg{color:var(--positive)}
 .icon-btn{width:var(--touch-min);height:var(--touch-min);border-radius:50%;border:0;background:transparent;color:var(--text-2);display:inline-grid;place-items:center;flex:none}
 .icon-btn svg{width:20px;height:20px}
 .chips{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-chip)}
@@ -116,6 +117,7 @@ button{cursor:pointer}
   .btn-primary:hover{filter:brightness(1.08)}
   .btn-secondary:hover,.chip:hover{background:#353e53}
   .chip.accent:hover{background:rgba(61,155,255,.22)}
+  .chip.done:hover{background:rgba(95,212,160,.22)}
   .btn-danger:hover{background:var(--danger-bg)}
   .icon-btn:hover{background:var(--surface-2)}
   .item:hover{background:rgba(255,255,255,.02)}
@@ -329,9 +331,9 @@ const A = {
     snack('Task deleted.', 'Undo', () => { S.items.splice(idx, 0, it); if (wasActive && !S.activeId) S.activeId = it.id; commit(); });
   },
   close() { closeModal(); },
-  'copy-h'(id, b) { const it = byId(id); if (it) copy(dec(dur(it)), `${dec(dur(it))} h`, b); },
-  'copy-t'(id, b) { const it = byId(id); if (it && it.ticket) copy(it.ticket, it.ticket, b); },
-  'copy-r'(id, b) { const it = byId(id); if (it) copy(it.remark, 'remark', b); },
+  'copy-h'(id) { const it = byId(id); if (it) copyField(it, 'h', dec(dur(it)), `${dec(dur(it))} h`); },
+  'copy-t'(id) { const it = byId(id); if (it && it.ticket) copyField(it, 't', it.ticket, it.ticket); },
+  'copy-r'(id) { const it = byId(id); if (it) copyField(it, 'r', it.remark, 'remark'); },
 };
 
 function startNew() {
@@ -378,7 +380,18 @@ function roundAll() {
 }
 
 /* ---------- clipboard ---------- */
-async function copy(text, label, btn) {
+/* Remember what was copied, per task and field. A chip shows as copied only while
+   the value is unchanged, so it turns back if the hours, ticket or remark change later. */
+async function copyField(it, key, value, label) {
+  if (!(await copy(value, label))) return;
+  it.copied = Object.assign({}, it.copied, { [key]: value });
+  commit();
+}
+const values = (it, t) => ({ t: it.ticket, h: dec(dur(it, t)), r: it.remark });
+const isDone = (it, key, t) => !!it.copied && it.copied[key] === values(it, t)[key];
+const allDone = it => ['h', 'r'].concat(it.ticket ? ['t'] : []).every(k => isDone(it, k));
+
+async function copy(text, label) {
   let ok = true;
   try { await navigator.clipboard.writeText(text); }
   catch (e) {
@@ -386,13 +399,9 @@ async function copy(text, label, btn) {
     ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0'; document.body.appendChild(ta); ta.select();
     try { ok = document.execCommand('copy'); } catch (_) { ok = false; } ta.remove();
   }
-  if (!ok) return snack("Couldn't copy. Select the text and copy it by hand.");
+  if (!ok) { snack("Couldn't copy. Select the text and copy it by hand."); return false; }
   snack(`Copied ${label}`);
-  if (btn) {
-    const iconEl = btn.querySelector('svg');
-    if (iconEl) { const old = iconEl.outerHTML; iconEl.outerHTML = ic.check; btn.classList.add('copied');
-      setTimeout(() => { if (btn.isConnected) { btn.querySelector('svg').outerHTML = old; btn.classList.remove('copied'); } }, 1200); }
-  }
+  return true;
 }
 
 /* ---------- snackbar ---------- */
@@ -462,11 +471,21 @@ function saveEdit(form) {
 const badge = (kind, text, icon = '') => `<span class="badge ${kind}">${icon}${esc(text)}</span>`;
 const runBadge = () => `<span class="badge positive"><span class="dot" aria-hidden="true"></span>Running</span>`;
 
+function chip(it, key, act, label, inner) {
+  const done = isDone(it, key);
+  return `<button type="button" class="chip${done ? ' done' : ''}" data-act="${act}" data-id="${it.id}" data-key="${key}" aria-label="Copy ${esc(label)}${done ? ' (copied)' : ''}">${done ? ic.check : ic.copy}${inner}</button>`;
+}
 function copyChips(it) {
-  return `
-    <button type="button" class="chip" data-act="copy-h" data-id="${it.id}" aria-label="Copy hours">${ic.copy}<span class="fig" data-dec="${it.id}">${dec(dur(it))} h</span></button>
-    ${it.ticket ? `<button type="button" class="chip" data-act="copy-t" data-id="${it.id}" aria-label="Copy ticket ${esc(it.ticket)}">${ic.copy}<span>${esc(it.ticket)}</span></button>` : ''}
-    <button type="button" class="chip" data-act="copy-r" data-id="${it.id}" aria-label="Copy remark">${ic.copy}<span>Remark</span></button>`;
+  return (it.ticket ? chip(it, 't', 'copy-t', 'ticket ' + it.ticket, `<span>${esc(it.ticket)}</span>`) : '')
+    + chip(it, 'h', 'copy-h', 'hours', `<span class="fig" data-dec="${it.id}">${dec(dur(it))} h</span>`)
+    + chip(it, 'r', 'copy-r', 'remark', `<span>Remark</span>`);
+}
+function syncChip(btn, it, t) {
+  const done = isDone(it, btn.dataset.key, t);
+  if (btn.classList.contains('done') === done) return;
+  btn.classList.toggle('done', done);
+  btn.querySelector('svg').outerHTML = done ? ic.check : ic.copy;
+  btn.setAttribute('aria-label', btn.getAttribute('aria-label').replace(/ \(copied\)$/, '') + (done ? ' (copied)' : ''));
 }
 
 function renderSession() {
@@ -547,7 +566,7 @@ function renderList() {
         </div>
         <div class="item-fig">
           <span class="row-figure">${hms(dur(it))}</span>
-          ${it.adjustMs ? `<span class="label muted">Adjusted</span>` : ''}
+          ${allDone(it) ? badge('positive', 'Copied', ic.check) : it.adjustMs ? `<span class="label muted">Adjusted</span>` : ''}
         </div>
         <button type="button" class="icon-btn edit-btn" data-act="edit" data-id="${it.id}" aria-label="Edit task">${ic.edit}</button>
       </div>
@@ -583,7 +602,7 @@ function tick() {
   }
   const a = active();
   if (a) { const d = dur(a, t); set('cur', hms(d)); set('curDec', `${dec(d)} h${a.adjustMs ? ' · adjusted' : ''}`); }
-  $$('[data-dec]').forEach(e => { const it = byId(e.dataset.dec); if (it) { const v = `${dec(dur(it, t))} h`; if (e.textContent !== v) e.textContent = v; } });
+  $$('[data-dec]').forEach(e => { const it = byId(e.dataset.dec); if (it) { const v = `${dec(dur(it, t))} h`; if (e.textContent !== v) e.textContent = v; syncChip(e.closest('.chip'), it, t); } });
   $('#hdrNote').innerHTML = a && isRunning(a) ? `${ic.clock.replace('<svg', '<svg width="12" height="12"')}<span>${esc(a.ticket || 'Tracking')}</span>` : '';
   document.title = a && isRunning(a) ? `${hms(dur(a, t))} · ${a.ticket || a.remark} – TimeCode` : 'TimeCode';
 }
