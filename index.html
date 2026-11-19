@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1A1F2B">
+<meta name="color-scheme" content="dark">
+<title>TimeCode</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1A1F2B; --glass:rgba(35,42,57,.72); --glass-border:rgba(255,255,255,.06);
+  --surface:#232A39; --surface-2:#2C3447; --snackbar-bg:#2E3649;
+  --border:rgba(255,255,255,.12); --border-dashed:rgba(255,255,255,.22);
+  --text:#E6EAF2; --text-2:#B4BCCA; --muted:#9AA3B5; --faint:#6E778A;
+  --accent:#3D9BFF; --on-accent:#0B1A2E; --info-bg:rgba(61,155,255,.14);
+  --positive:#5FD4A0; --positive-bg:rgba(95,212,160,.14);
+  --warn:#F2B34B; --warn-bg:rgba(242,179,75,.14);
+  --danger:#FF8A90; --danger-bg:rgba(255,138,144,.10); --danger-badge-bg:rgba(255,138,144,.16); --danger-border:rgba(255,138,144,.55);
+  --scrim:rgba(8,10,16,.55); --scrim-strong:rgba(8,10,16,.72);
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --figures:'Space Grotesk','Inter',system-ui,sans-serif;
+  --space-margin:16px; --space-chip:6px; --space-stack:10px; --space-section:14px; --space-pane:24px;
+  --radius-chip:22px; --radius-card:20px; --radius-key:14px; --radius-sheet:24px; --radius-button:28px; --radius-pill:999px;
+  --touch-min:48px; --button-h:56px; --chip-h:40px; --badge-h:28px; --header-h:56px;
+  --content-max:560px; --page-max:640px; --dialog-max:360px; --side-col:360px; --wide-max:1200px;
+  --shadow-snackbar:0 8px 24px rgba(0,0,0,.4); --shadow-dialog:0 24px 64px rgba(0,0,0,.5);
+  --blur-glass:blur(18px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:400 15px/22px var(--sans);-webkit-font-smoothing:antialiased}
+body{min-height:100dvh}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.fig,.hero,.card-figure,.row-figure{font-family:var(--figures);font-variant-numeric:tabular-nums}
+
+/* Night ridges background */
+.ridges{position:fixed;inset:0;z-index:0;pointer-events:none}
+.ridges svg{width:100%;height:100%;display:block}
+
+/* Shell */
+.app{position:relative;z-index:1;max-width:var(--content-max);margin:0 auto;
+  padding:env(safe-area-inset-top) calc(var(--space-margin) + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(var(--space-margin) + env(safe-area-inset-left))}
+.hdr{height:var(--header-h);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.screen-title{font:600 22px/28px var(--sans);margin:0;display:flex;align-items:center;gap:10px}
+.screen-title .logo{width:32px;height:32px;border-radius:50%;background:var(--info-bg);color:var(--accent);display:grid;place-items:center}
+.hdr-note{font:500 13px/18px var(--sans);color:var(--muted);display:flex;align-items:center;gap:6px}
+.layout{display:flex;flex-direction:column;gap:var(--space-section)}
+.col-side,.col-list{display:flex;flex-direction:column;gap:var(--space-section);min-width:0}
+@media (min-width:1024px){
+  .app{max-width:var(--wide-max);padding-left:var(--space-pane);padding-right:var(--space-pane)}
+  .layout{display:grid;grid-template-columns:var(--side-col) minmax(0,1fr);gap:var(--space-pane);align-items:start}
+  .col-side{position:sticky;top:16px}
+  .col-list{max-width:var(--content-max)}
+}
+
+/* Cards */
+.card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-card);
+  -webkit-backdrop-filter:var(--blur-glass);backdrop-filter:var(--blur-glass);padding:var(--space-margin);
+  display:flex;flex-direction:column;gap:12px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:28px}
+.label{font:500 13px/18px var(--sans)}
+.muted{color:var(--muted)} .text-2{color:var(--text-2)} .faint{color:var(--faint)}
+.body-sm{font:400 14px/20px var(--sans);margin:0}
+.body{margin:0}
+.card-figure{font-weight:700;font-size:24px;line-height:32px}
+.row-figure{font-weight:600;font-size:15px;line-height:22px}
+.hero{font-weight:700;font-size:48px;line-height:56px;letter-spacing:-1.5px}
+.sheet-title{font:600 18px/24px var(--sans);margin:0}
+
+/* Badges */
+.badge{height:var(--badge-h);border-radius:var(--radius-pill);padding:0 10px;display:inline-flex;align-items:center;gap:6px;
+  font:600 13px/18px var(--sans);white-space:nowrap}
+.badge svg{width:13px;height:13px}
+.badge.positive{background:var(--positive-bg);color:var(--positive)}
+.badge.warn{background:var(--warn-bg);color:var(--warn)}
+.badge.danger{background:var(--danger-badge-bg);color:var(--danger)}
+.badge.muted{background:var(--surface-2);color:var(--muted)}
+.badge.info{background:var(--info-bg);color:var(--accent)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat .badge{align-self:flex-start;margin-top:4px}
+
+/* Buttons */
+.btn{height:var(--button-h);border-radius:var(--radius-button);padding:0 20px;border:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font:600 16px/20px var(--sans);white-space:nowrap;transition:filter .15s,background .15s}
+.btn svg{width:20px;height:20px;flex:none}
+.btn-primary{background:var(--accent);color:var(--on-accent)}
+.btn-secondary{background:var(--surface-2);color:var(--text)}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger-border)}
+.btn-danger-fill{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-stack)}
+.btn-row .full{grid-column:1/-1}
+.btn-col{display:flex;flex-direction:column;gap:var(--space-stack)}
+.chip{height:var(--chip-h);min-width:var(--touch-min);border-radius:var(--radius-chip);padding:0 14px;border:0;background:var(--surface-2);color:var(--text);
+  display:inline-flex;align-items:center;gap:6px;font:500 13px/18px var(--sans);max-width:100%;transition:background .15s}
+.chip svg{width:16px;height:16px;flex:none;color:var(--muted)}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.accent{background:var(--info-bg);color:var(--accent)}
+.chip.accent svg{color:var(--accent)}
+.chip.copied svg{color:var(--positive)}
+.icon-btn{width:var(--touch-min);height:var(--touch-min);border-radius:50%;border:0;background:transparent;color:var(--text-2);display:inline-grid;place-items:center;flex:none}
+.icon-btn svg{width:20px;height:20px}
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-chip)}
+@media (hover:hover){
+  .btn-primary:hover{filter:brightness(1.08)}
+  .btn-secondary:hover,.chip:hover{background:#353e53}
+  .chip.accent:hover{background:rgba(61,155,255,.22)}
+  .btn-danger:hover{background:var(--danger-bg)}
+  .icon-btn:hover{background:var(--surface-2)}
+  .item:hover{background:rgba(255,255,255,.02)}
+}
+
+/* Form */
+.form{display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px}
+.input{height:52px;border-radius:var(--radius-key);background:var(--surface);border:1px solid var(--border);padding:0 14px;font:400 15px/22px var(--sans);color:var(--text);width:100%}
+.input::placeholder{color:var(--faint)}
+.input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.input.fig{font-family:var(--figures);font-weight:600}
+.err{color:var(--danger);display:flex;gap:6px;align-items:center}
+.err svg{width:16px;height:16px;flex:none}
+.opt{color:var(--faint);font-weight:400}
+
+/* Current task */
+.cur-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ticket{font:600 13px/18px var(--sans);color:var(--accent);letter-spacing:.2px}
+.ticket.none{color:var(--faint);font-weight:500}
+.remark{font:400 15px/22px var(--sans);color:var(--text);overflow-wrap:anywhere}
+.timer-wrap{display:flex;flex-direction:column;align-items:flex-start;padding:4px 0}
+
+/* List */
+.list-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px;min-height:28px}
+.list{list-style:none;margin:0;padding:0;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-card);
+  -webkit-backdrop-filter:var(--blur-glass);backdrop-filter:var(--blur-glass);overflow:hidden}
+.item{padding:14px var(--space-margin);display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--glass-border)}
+.item:first-child{border-top:0}
+.item-top{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+.item-text{min-width:0;display:flex;flex-direction:column;gap:2px}
+.item-text .remark{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.head-right{display:flex;align-items:center;gap:2px;margin:-10px -10px -10px 0}
+.edit-btn{margin:-12px -12px 0 -8px}
+.item-fig{margin-left:auto;text-align:right;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.empty{border:1px dashed var(--border-dashed);border-radius:var(--radius-card);padding:20px var(--space-margin);color:var(--text-2);text-align:center}
+.foot{margin-top:6px;text-align:center}
+
+/* Snackbar */
+.snackbar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translate(-50%,24px);opacity:0;pointer-events:none;
+  width:min(calc(100% - 32px),400px);background:var(--snackbar-bg);color:var(--text);border-radius:var(--radius-key);box-shadow:var(--shadow-snackbar);
+  padding:6px 6px 6px 16px;min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:8px;font:400 14px/20px var(--sans);
+  transition:opacity .2s,transform .2s;z-index:30}
+.snackbar.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.snack-act{height:40px;padding:0 14px;border:0;background:transparent;color:var(--accent);font:600 14px/20px var(--sans);border-radius:var(--radius-pill)}
+@media (min-width:1024px){.snackbar{left:calc(24px + env(safe-area-inset-left));transform:translate(0,24px)}.snackbar.show{transform:none}}
+
+/* Sheets & dialogs */
+.modal{position:fixed;inset:0;z-index:40;display:flex}
+.modal .scrim{position:absolute;inset:0;background:var(--scrim)}
+.modal.dialog .scrim{background:var(--scrim-strong)}
+.panel{position:relative;background:var(--surface);color:var(--text);display:flex;flex-direction:column;gap:14px;padding:20px var(--space-margin) calc(20px + env(safe-area-inset-bottom))}
+.modal.sheet{align-items:flex-end;justify-content:center}
+.modal.sheet .panel{width:100%;max-width:var(--page-max);border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;max-height:92dvh;overflow:auto}
+.modal.dialog{align-items:center;justify-content:center;padding:16px}
+.modal.dialog .panel{width:100%;max-width:var(--dialog-max);border-radius:var(--radius-sheet);box-shadow:var(--shadow-dialog);padding-bottom:20px}
+.dialog-icon{width:48px;height:48px;border-radius:50%;background:var(--danger-badge-bg);color:var(--danger);display:grid;place-items:center}
+.dialog-icon svg{width:24px;height:24px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+@media (min-width:600px){
+  .modal.sheet{align-items:center;padding:24px}
+  .modal.sheet .panel{border-radius:var(--radius-sheet);max-width:var(--page-max);box-shadow:var(--shadow-dialog);padding-bottom:20px}
+}
+</style>
+</head>
+<body>
+<div class="ridges" aria-hidden="true">
+  <svg viewBox="0 0 1280 800" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#1A1F2B"/><stop offset=".55" stop-color="#1C2333"/><stop offset="1" stop-color="#232C42"/>
+      </linearGradient>
+      <radialGradient id="glow" cx=".72" cy=".62" r=".5">
+        <stop offset="0" stop-color="#3D9BFF" stop-opacity=".10"/><stop offset="1" stop-color="#3D9BFF" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="1280" height="800" fill="url(#sky)"/>
+    <rect width="1280" height="800" fill="url(#glow)"/>
+    <path d="M0 560 L90 512 L170 540 L260 470 L350 528 L430 490 L520 548 L610 482 L700 530 L790 466 L880 520 L960 488 L1050 540 L1140 492 L1220 526 L1280 504 V800 H0Z" fill="#222A3D" opacity=".75"/>
+    <path d="M0 630 L110 588 L200 612 L300 566 L400 610 L500 580 L600 624 L700 574 L820 618 L920 584 L1020 622 L1120 590 L1210 616 L1280 598 V800 H0Z" fill="#1E2536"/>
+    <path d="M0 700 L140 668 L260 690 L380 656 L520 692 L660 662 L780 694 L920 664 L1060 696 L1180 670 L1280 688 V800 H0Z" fill="#1A2030"/>
+  </svg>
+</div>
+
+<div class="app">
+  <header class="hdr">
+    <h1 class="screen-title"><span class="logo" aria-hidden="true" id="logoIcon"></span>TimeCode</h1>
+    <span class="hdr-note" id="hdrNote"></span>
+  </header>
+  <main class="layout">
+    <section class="col-side">
+      <div class="card" id="session" aria-label="Workday"></div>
+      <div class="card" id="current" aria-label="Current task"></div>
+    </section>
+    <section class="col-list" aria-labelledby="listTitle">
+      <div class="list-head">
+        <span class="label muted" id="listTitle">Tracked tasks</span>
+        <span class="label muted" id="listCount"></span>
+      </div>
+      <ul class="list" id="list"></ul>
+      <p class="empty body-sm" id="empty">Stopped tasks show up here. Resume any of them with one tap.</p>
+      <p class="foot label faint">Saved in this browser only. Clearing site data removes it.</p>
+    </section>
+  </main>
+</div>
+
+<div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>
+<div class="modal" id="modal" hidden></div>
+
+<script>
+(() => {
+'use strict';
+const KEY = 'timecode.v1';
+const Q = 15 * 60 * 1000;            // quarter of an hour
+const H = 3600000;
+
+/* ---------- icons (24×24, 2px stroke, round caps/joins) ---------- */
+const svg = (d, w = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ic = {
+  play:  svg('<path d="M8 5.5v13l10.5-6.5z"/>'),
+  pause: svg('<path d="M9 5.5v13M15 5.5v13"/>', 2.4),
+  stop:  svg('<rect x="6" y="6" width="12" height="12" rx="2.5"/>'),
+  copy:  svg('<rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/>'),
+  check: svg('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 3),
+  edit:  svg('<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'),
+  clock: svg('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', 2.5),
+  round: svg('<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/><path d="M12 8v4h3"/>'),
+  warn:  svg('<path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4M12 17v.01"/>', 2.2),
+  close: svg('<path d="M6 6l12 12M18 6 6 18"/>'),
+  trash: svg('<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>'),
+  info:  svg('<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.01"/>'),
+};
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const now = () => Date.now();
+const uid = () => Math.random().toString(36).slice(2, 9) + now().toString(36).slice(-4);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const hms = ms => { const t = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(t/3600)}:${pad(Math.floor(t%3600/60))}:${pad(t%60)}`; };
+const hm  = ms => { const t = Math.floor(Math.abs(ms) / 60000); return `${Math.floor(t/60)}:${pad(t%60)}`; };
+const dec = ms => (Math.max(0, ms) / H).toFixed(2);
+const clock = ts => { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+
+/* ---------- state ---------- */
+// { session: {segs:[{s,e}]} | null, items: [{id,ticket,remark,segs:[{s,e}],adjustMs}], activeId }
+const blank = () => ({ session: null, items: [], activeId: null });
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.items)) return s; } catch (e) {}
+  return blank();
+}
+let S = load();
+let draft = { ticket: '', remark: '' };
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { snack("Couldn't save. Your browser storage may be full or blocked."); } }
+function commit() { save(); render(); }
+
+const byId = id => S.items.find(i => i.id === id);
+const active = () => byId(S.activeId) || null;
+const isRunning = it => { const g = it && it.segs[it.segs.length - 1]; return !!g && g.e == null; };
+const rawDur = (it, t = now()) => it.segs.reduce((a, g) => a + ((g.e ?? t) - g.s), 0);
+const dur = (it, t = now()) => Math.max(0, rawDur(it, t) + (it.adjustMs || 0));
+const lastTouch = it => it.segs.reduce((m, g) => Math.max(m, g.e ?? now(), g.s), 0);
+const tracked = (t = now()) => S.items.reduce((a, i) => a + dur(i, t), 0);
+const sessOn = () => { const g = S.session && S.session.segs[S.session.segs.length - 1]; return !!g && g.e == null; };
+const sessDur = (t = now()) => S.session ? S.session.segs.reduce((a, g) => a + ((g.e ?? t) - g.s), 0) : 0;
+
+function ensureSession() {
+  if (!S.session) S.session = { segs: [{ s: now(), e: null }] };
+  else if (!sessOn()) S.session.segs.push({ s: now(), e: null });
+}
+function pauseItem(it) { if (isRunning(it)) it.segs[it.segs.length - 1].e = now(); }
+function runItem(it) { ensureSession(); if (!isRunning(it)) it.segs.push({ s: now(), e: null }); }
+
+/* ---------- actions ---------- */
+const A = {
+  'sess-start'() { ensureSession(); commit(); },
+  'sess-resume'() { ensureSession(); commit(); snack('Workday resumed. The break is not counted.'); },
+  'sess-end'() {
+    const a = active(); if (a) pauseItem(a);
+    const g = S.session && S.session.segs[S.session.segs.length - 1]; if (g && g.e == null) g.e = now();
+    commit(); snack('Workday ended. Timer paused.');
+  },
+  'new-day'() {
+    openModal('dialog', `
+      <div class="dialog-icon">${ic.warn}</div>
+      <h2 id="mTitle" class="sheet-title">Start a new day?</h2>
+      <p class="body text-2">This clears the workday and all ${S.items.length} tracked task${S.items.length === 1 ? '' : 's'} from this browser. Copy anything you still need first.</p>
+      <div class="btn-col">
+        <button class="btn btn-danger-fill" data-act="new-day-confirm">Clear and start new day</button>
+        <button class="btn btn-secondary" data-act="close">Cancel</button>
+      </div>`);
+  },
+  'new-day-confirm'() { S = blank(); draft = { ticket: '', remark: '' }; closeModal(); commit(); },
+  pause() { const a = active(); if (a) { pauseItem(a); commit(); } },
+  'resume-cur'() { const a = active(); if (a) { runItem(a); commit(); } },
+  stop() { const a = active(); if (a) { pauseItem(a); S.activeId = null; commit(); setTimeout(() => $('#fRemark')?.focus(), 0); } },
+  resume(id) {
+    const it = byId(id); if (!it) return;
+    const a = active(); if (a && a.id !== id) pauseItem(a);
+    runItem(it); S.activeId = id; commit();
+    if (innerWidth < 1024) $('#current').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+  round() { roundAll(); },
+  edit(id) { openEdit(id); },
+  delete(id) {
+    const idx = S.items.findIndex(i => i.id === id); if (idx < 0) return;
+    const it = S.items[idx]; const wasActive = S.activeId === id;
+    pauseItem(it); S.items.splice(idx, 1); if (wasActive) S.activeId = null;
+    closeModal(); commit();
+    snack('Task deleted.', 'Undo', () => { S.items.splice(idx, 0, it); if (wasActive && !S.activeId) S.activeId = it.id; commit(); });
+  },
+  close() { closeModal(); },
+  'copy-h'(id, b) { const it = byId(id); if (it) copy(dec(dur(it)), `${dec(dur(it))} h`, b); },
+  'copy-t'(id, b) { const it = byId(id); if (it && it.ticket) copy(it.ticket, it.ticket, b); },
+  'copy-r'(id, b) { const it = byId(id); if (it) copy(it.remark, 'remark', b); },
+};
+
+function startNew() {
+  const remark = draft.remark.trim();
+  if (!remark) { $('#fErr').hidden = false; $('#fRemark').focus(); return; }
+  ensureSession();
+  const it = { id: uid(), ticket: draft.ticket.trim(), remark, segs: [{ s: now(), e: null }], adjustMs: 0 };
+  S.items.push(it); S.activeId = it.id;
+  draft = { ticket: '', remark: '' };
+  commit();
+}
+
+/* Round every task to whole quarter hours so the total matches the workday
+   (rounded to the nearest quarter). Untracked time is shared out in proportion
+   to the time already on each task (largest-remainder method); each task keeps
+   at least 0.25 h. */
+function roundAll() {
+  const items = S.items.filter(i => dur(i) > 0);
+  if (!items.length) return snack('Nothing to round yet. Track a task first.');
+  const a = active(); let paused = false;
+  if (a && isRunning(a)) { pauseItem(a); paused = true; }
+  const before = S.items.map(i => [i.id, i.adjustMs || 0]);
+  const t = now();
+  const durs = items.map(i => dur(i, t));
+  const total = durs.reduce((x, y) => x + y, 0);
+  const sess = sessDur(t);
+  let target = Math.round((sess > 0 ? sess : total) / Q);
+  target = Math.max(target, items.length);
+  const ideal = durs.map(d => d / total * target);
+  const q = ideal.map(x => Math.max(1, Math.floor(x)));
+  let diff = target - q.reduce((x, y) => x + y, 0);
+  const byRem = ideal.map((x, i) => [x - Math.floor(x), i]).sort((m, n) => n[0] - m[0]);
+  for (let k = 0; diff > 0; k++) { q[byRem[k % byRem.length][1]]++; diff--; }
+  for (let k = 0, guard = 0; diff < 0 && guard < 100000; k++, guard++) {
+    const i = byRem[byRem.length - 1 - (k % byRem.length)][1];
+    if (q[i] > 1) { q[i]--; diff++; }
+  }
+  items.forEach((it, j) => { it.adjustMs = q[j] * Q - rawDur(it, t); });
+  commit();
+  snack(`Rounded ${items.length} task${items.length === 1 ? '' : 's'} to ${dec(target * Q)} h${paused ? ' · timer paused' : ''}.`, 'Undo', () => {
+    before.forEach(([id, adj]) => { const it = byId(id); if (it) it.adjustMs = adj; });
+    commit();
+  });
+}
+
+/* ---------- clipboard ---------- */
+async function copy(text, label, btn) {
+  let ok = true;
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0'; document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch (_) { ok = false; } ta.remove();
+  }
+  if (!ok) return snack("Couldn't copy. Select the text and copy it by hand.");
+  snack(`Copied ${label}`);
+  if (btn) {
+    const iconEl = btn.querySelector('svg');
+    if (iconEl) { const old = iconEl.outerHTML; iconEl.outerHTML = ic.check; btn.classList.add('copied');
+      setTimeout(() => { if (btn.isConnected) { btn.querySelector('svg').outerHTML = old; btn.classList.remove('copied'); } }, 1200); }
+  }
+}
+
+/* ---------- snackbar ---------- */
+let snackTimer;
+function snack(msg, actLabel, fn) {
+  const s = $('#snackbar');
+  s.innerHTML = `<span>${esc(msg)}</span>${actLabel ? `<button type="button" class="snack-act">${esc(actLabel)}</button>` : ''}`;
+  if (actLabel) s.querySelector('button').onclick = () => { s.classList.remove('show'); fn(); };
+  s.classList.add('show');
+  clearTimeout(snackTimer);
+  snackTimer = setTimeout(() => s.classList.remove('show'), actLabel ? 6000 : 2200);
+}
+
+/* ---------- modal (sheet / dialog) ---------- */
+let lastFocus = null;
+function openModal(kind, html) {
+  const m = $('#modal');
+  lastFocus = document.activeElement;
+  m.className = 'modal ' + kind;
+  m.innerHTML = `<div class="scrim" data-act="close"></div><div class="panel" role="${kind === 'dialog' ? 'alertdialog' : 'dialog'}" aria-modal="true" aria-labelledby="mTitle">${html}</div>`;
+  m.hidden = false;
+  setTimeout(() => m.querySelector('.panel input, .panel button')?.focus(), 30);
+}
+function closeModal() {
+  const m = $('#modal'); if (m.hidden) return;
+  m.hidden = true; m.innerHTML = '';
+  if (lastFocus && lastFocus.isConnected) lastFocus.focus();
+}
+function openEdit(id) {
+  const it = byId(id); if (!it) return;
+  const shown = dec(dur(it));
+  openModal('sheet', `
+    <div class="panel-head"><h2 id="mTitle" class="sheet-title">Edit task</h2>
+      <button type="button" class="icon-btn" data-act="close" aria-label="Close">${ic.close}</button></div>
+    <form id="editForm" class="form" data-id="${it.id}" data-shown="${shown}" novalidate>
+      <label class="field"><span class="label muted">Jira ticket <span class="opt">(optional)</span></span>
+        <input class="input" name="ticket" value="${esc(it.ticket)}" placeholder="PROJ-123" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+      <label class="field"><span class="label muted">Remark</span>
+        <input class="input" name="remark" value="${esc(it.remark)}" placeholder="What did you work on?" autocomplete="off" required></label>
+      <label class="field"><span class="label muted">Time in hours</span>
+        <input class="input fig" name="hours" value="${shown}" inputmode="decimal" autocomplete="off"></label>
+      <p class="body-sm muted">${isRunning(it) ? 'The timer keeps running from the new value.' : 'Use decimals: 1.5 is 1 h 30 min.'}</p>
+      <p class="err body-sm" id="eErr" hidden></p>
+      <button class="btn btn-primary" type="submit">Save changes</button>
+      <button type="button" class="btn btn-danger" data-act="delete" data-id="${it.id}">${ic.trash} Delete task</button>
+    </form>`);
+}
+function saveEdit(form) {
+  const it = byId(form.dataset.id); if (!it) return closeModal();
+  const f = new FormData(form);
+  const remark = String(f.get('remark')).trim();
+  const hoursStr = String(f.get('hours')).trim().replace(',', '.');
+  const err = $('#eErr');
+  const fail = msg => { err.innerHTML = `${ic.warn}<span>${esc(msg)}</span>`; err.hidden = false; };
+  if (!remark) return fail('Add a remark. It is required for every task.');
+  if (hoursStr !== form.dataset.shown) {
+    const h = Number(hoursStr);
+    if (!isFinite(h) || h < 0 || hoursStr === '') return fail('Enter the time as a number of hours, for example 1.25.');
+    it.adjustMs = Math.round(h * H) - rawDur(it);
+  }
+  it.ticket = String(f.get('ticket')).trim();
+  it.remark = remark;
+  closeModal(); commit(); snack('Task updated.');
+}
+
+/* ---------- render ---------- */
+const badge = (kind, text, icon = '') => `<span class="badge ${kind}">${icon}${esc(text)}</span>`;
+const runBadge = () => `<span class="badge positive"><span class="dot" aria-hidden="true"></span>Running</span>`;
+
+function copyChips(it) {
+  return `
+    <button type="button" class="chip" data-act="copy-h" data-id="${it.id}" aria-label="Copy hours">${ic.copy}<span class="fig" data-dec="${it.id}">${dec(dur(it))} h</span></button>
+    ${it.ticket ? `<button type="button" class="chip" data-act="copy-t" data-id="${it.id}" aria-label="Copy ticket ${esc(it.ticket)}">${ic.copy}<span>${esc(it.ticket)}</span></button>` : ''}
+    <button type="button" class="chip" data-act="copy-r" data-id="${it.id}" aria-label="Copy remark">${ic.copy}<span>Remark</span></button>`;
+}
+
+function renderSession() {
+  const el = $('#session');
+  if (!S.session) {
+    el.innerHTML = `
+      <div class="card-head"><span class="label muted">Workday</span>${badge('muted', 'Not started')}</div>
+      <p class="body text-2">Start your workday to see how much of it you've tracked. Starting a task starts it too.</p>
+      <button type="button" class="btn btn-primary" data-act="sess-start">${ic.play} Start workday</button>`;
+    return;
+  }
+  const on = sessOn();
+  const hasItems = S.items.some(i => dur(i) > 0);
+  el.innerHTML = `
+    <div class="card-head"><span class="label muted">Workday · since ${clock(S.session.segs[0].s)}</span>${on ? runBadge() : badge('muted', 'Ended')}</div>
+    <div class="stats">
+      <div class="stat"><span class="label muted">Workday</span><span class="card-figure" data-k="sess"></span><span class="label muted fig" data-k="sessDec"></span></div>
+      <div class="stat"><span class="label muted">Tracked</span><span class="card-figure" data-k="trk"></span><span class="label muted fig" data-k="trkDec"></span></div>
+      <div class="stat"><span class="label muted" data-k="deltaLbl">Untracked</span><span class="card-figure" data-k="delta"></span><span data-k="deltaBadge"></span></div>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-secondary full" data-act="round" ${hasItems ? '' : 'disabled'} title="Rounds every task to 15-minute steps so the total matches the workday">${ic.round} Round all to ¼ h</button>
+      ${on
+        ? `<button type="button" class="btn btn-danger full" data-act="sess-end">${ic.stop} End workday</button>`
+        : `<button type="button" class="btn btn-secondary" data-act="sess-resume">${ic.play} Resume day</button>
+           <button type="button" class="btn btn-danger" data-act="new-day">New day</button>`}
+    </div>`;
+}
+
+function renderCurrent() {
+  const el = $('#current');
+  const a = active();
+  if (!a) {
+    el.innerHTML = `
+      <div class="card-head"><span class="label muted">New task</span></div>
+      <form id="newForm" class="form" novalidate>
+        <label class="field"><span class="label muted">Jira ticket <span class="opt">(optional)</span></span>
+          <input id="fTicket" class="input" placeholder="PROJ-123" value="${esc(draft.ticket)}" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+        <label class="field"><span class="label muted">Remark</span>
+          <input id="fRemark" class="input" placeholder="What are you working on?" value="${esc(draft.remark)}" autocomplete="off" required aria-describedby="fErr"></label>
+        <p class="err body-sm" id="fErr" hidden>${ic.warn}<span>Add a remark to start the timer.</span></p>
+        <button type="submit" class="btn btn-primary">${ic.play} Start timer</button>
+      </form>`;
+    return;
+  }
+  const run = isRunning(a);
+  el.innerHTML = `
+    <div class="card-head"><span class="label muted">Now tracking</span>
+      <span class="head-right">${run ? runBadge() : badge('warn', 'Paused', ic.pause)}<button type="button" class="icon-btn" data-act="edit" data-id="${a.id}" aria-label="Edit task">${ic.edit}</button></span></div>
+    <div class="cur-text">
+      <span class="ticket ${a.ticket ? '' : 'none'}">${a.ticket ? esc(a.ticket) : 'No ticket'}</span>
+      <span class="remark">${esc(a.remark)}</span>
+    </div>
+    <div class="timer-wrap">
+      <span class="hero" data-k="cur" role="timer" aria-live="off"></span>
+      <span class="label muted fig" data-k="curDec"></span>
+    </div>
+    <div class="btn-row">
+      ${run
+        ? `<button type="button" class="btn btn-primary" data-act="pause">${ic.pause} Pause</button>`
+        : `<button type="button" class="btn btn-primary" data-act="resume-cur">${ic.play} Resume</button>`}
+      <button type="button" class="btn btn-secondary" data-act="stop">${ic.stop} Stop</button>
+    </div>
+    <div class="chips">${copyChips(a)}</div>`;
+}
+
+function renderList() {
+  const items = S.items.filter(i => i.id !== S.activeId).sort((x, y) => lastTouch(y) - lastTouch(x));
+  $('#listCount').textContent = items.length ? `${items.length} task${items.length === 1 ? '' : 's'}` : '';
+  $('#empty').hidden = items.length > 0;
+  $('#list').hidden = items.length === 0;
+  $('#list').innerHTML = items.map(it => `
+    <li class="item">
+      <div class="item-top">
+        <div class="item-text">
+          <span class="ticket ${it.ticket ? '' : 'none'}">${it.ticket ? esc(it.ticket) : 'No ticket'}</span>
+          <span class="remark">${esc(it.remark)}</span>
+        </div>
+        <div class="item-fig">
+          <span class="row-figure">${hms(dur(it))}</span>
+          ${it.adjustMs ? `<span class="label muted">Adjusted</span>` : ''}
+        </div>
+        <button type="button" class="icon-btn edit-btn" data-act="edit" data-id="${it.id}" aria-label="Edit task">${ic.edit}</button>
+      </div>
+      <div class="chips">
+        <button type="button" class="chip accent" data-act="resume" data-id="${it.id}" aria-label="Resume ${esc(it.ticket || it.remark)}">${ic.play}<span>Resume</span></button>
+        ${copyChips(it)}
+      </div>
+    </li>`).join('');
+}
+
+function render() {
+  renderSession(); renderCurrent(); renderList(); tick();
+}
+
+let lastDeltaKind = '';
+function tick() {
+  const t = now();
+  const set = (k, v) => $$(`[data-k="${k}"]`).forEach(e => { if (e.textContent !== v) e.textContent = v; });
+  if (S.session) {
+    const sd = sessDur(t), tr = tracked(t), d = sd - tr;
+    set('sess', hm(sd)); set('sessDec', `${dec(sd)} h`);
+    set('trk', hm(tr)); set('trkDec', `${dec(tr)} h`);
+    const kind = Math.abs(d) < 60000 ? 'ok' : d > 0 ? 'gap' : 'over';
+    set('delta', (kind === 'over' ? '+' : '') + hm(d));
+    set('deltaLbl', kind === 'over' ? 'Over' : 'Untracked');
+    const bEl = $('[data-k="deltaBadge"]');
+    if (bEl && (kind !== lastDeltaKind || !bEl.firstChild)) {
+      bEl.innerHTML = kind === 'ok' ? badge('positive', 'All tracked', ic.check)
+                    : kind === 'gap' ? badge('warn', 'Not tracked', ic.warn)
+                    : badge('danger', 'Over workday', ic.warn);
+      lastDeltaKind = kind;
+    }
+  }
+  const a = active();
+  if (a) { const d = dur(a, t); set('cur', hms(d)); set('curDec', `${dec(d)} h${a.adjustMs ? ' · adjusted' : ''}`); }
+  $$('[data-dec]').forEach(e => { const it = byId(e.dataset.dec); if (it) { const v = `${dec(dur(it, t))} h`; if (e.textContent !== v) e.textContent = v; } });
+  $('#hdrNote').innerHTML = a && isRunning(a) ? `${ic.clock.replace('<svg', '<svg width="12" height="12"')}<span>${esc(a.ticket || 'Tracking')}</span>` : '';
+  document.title = a && isRunning(a) ? `${hms(dur(a, t))} · ${a.ticket || a.remark} – TimeCode` : 'TimeCode';
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const fn = A[b.dataset.act]; if (fn) { e.preventDefault(); fn(b.dataset.id, b); }
+});
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  if (e.target.id === 'newForm') startNew();
+  else if (e.target.id === 'editForm') saveEdit(e.target);
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'fTicket') draft.ticket = e.target.value;
+  if (e.target.id === 'fRemark') { draft.remark = e.target.value; const er = $('#fErr'); if (er) er.hidden = true; }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+window.addEventListener('storage', e => { if (e.key === KEY) { S = load(); render(); } });   // keep tabs in sync
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+
+$('#logoIcon').innerHTML = ic.clock.replace('<svg', '<svg width="18" height="18"');
+render();
+setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
